@@ -372,28 +372,28 @@ export const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#111111] pt-40 pb-20 px-6 border-t-8 border-[#6C3BFF]">
+      <footer className="bg-[#111111] pt-20 pb-10 md:pt-40 md:pb-20 px-6 border-t-8 border-[#6C3BFF]">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-20 mb-40">
-            <div className="space-y-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-20 mb-20 md:mb-40">
+            <div className="space-y-6 md:space-y-8">
               <Link to="/" className="flex items-center gap-2 group">
-                <div className="w-12 h-12 bg-[#6C3BFF] rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)] border-2 border-white/20">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-[#6C3BFF] rounded-xl flex items-center justify-center text-white font-black text-xl md:text-2xl shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)] border-2 border-white/20">
                   F
                 </div>
-                <span className="text-3xl font-black tracking-tighter text-white">FounderOS</span>
+                <span className="text-2xl md:text-3xl font-black tracking-tighter text-white">FounderOS</span>
               </Link>
-              <p className="text-white/50 font-bold text-lg leading-relaxed">
+              <p className="text-white/50 font-bold text-base md:text-lg leading-relaxed max-w-sm">
                 The AI-powered operating system for modern founders. Build, scale, and exit faster with production-grade tools.
               </p>
-              <div className="flex gap-4">
-                <a href="#" className="w-12 h-12 bg-white/5 border-2 border-white/10 rounded-xl flex items-center justify-center hover:bg-[#6C3BFF] hover:border-[#6C3BFF] transition-all cursor-pointer group">
-                  <Twitter className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
+              <div className="flex flex-wrap gap-4">
+                <a href="#" className="w-10 h-10 md:w-12 md:h-12 bg-white/5 border-2 border-white/10 rounded-xl flex items-center justify-center hover:bg-[#6C3BFF] hover:border-[#6C3BFF] transition-all cursor-pointer group">
+                  <Twitter className="w-4 h-4 md:w-5 md:h-5 text-white/40 group-hover:text-white transition-colors" />
                 </a>
-                <a href="#" className="w-12 h-12 bg-white/5 border-2 border-white/10 rounded-xl flex items-center justify-center hover:bg-[#6C3BFF] hover:border-[#6C3BFF] transition-all cursor-pointer group">
-                  <Linkedin className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
+                <a href="#" className="w-10 h-10 md:w-12 md:h-12 bg-white/5 border-2 border-white/10 rounded-xl flex items-center justify-center hover:bg-[#6C3BFF] hover:border-[#6C3BFF] transition-all cursor-pointer group">
+                  <Linkedin className="w-4 h-4 md:w-5 md:h-5 text-white/40 group-hover:text-white transition-colors" />
                 </a>
-                <a href="#" className="w-12 h-12 bg-white/5 border-2 border-white/10 rounded-xl flex items-center justify-center hover:bg-[#6C3BFF] hover:border-[#6C3BFF] transition-all cursor-pointer group">
-                  <Github className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
+                <a href="#" className="w-10 h-10 md:w-12 md:h-12 bg-white/5 border-2 border-white/10 rounded-xl flex items-center justify-center hover:bg-[#6C3BFF] hover:border-[#6C3BFF] transition-all cursor-pointer group">
+                  <Github className="w-4 h-4 md:w-5 md:h-5 text-white/40 group-hover:text-white transition-colors" />
                 </a>
                 <a href="#" className="w-12 h-12 bg-white/5 border-2 border-white/10 rounded-xl flex items-center justify-center hover:bg-[#6C3BFF] hover:border-[#6C3BFF] transition-all cursor-pointer group">
                   <Instagram className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
@@ -401,45 +401,45 @@ export const LandingPage = () => {
               </div>
             </div>
 
-            <div className="space-y-8">
-              <h4 className="text-white font-black text-xl uppercase tracking-widest">Product</h4>
-              <ul className="space-y-4">
+            <div className="space-y-6 md:space-y-8">
+              <h4 className="text-white font-black text-lg md:text-xl uppercase tracking-widest">Product</h4>
+              <ul className="space-y-3 md:space-y-4">
                 {['Features', 'Pricing', 'Roadmap', 'Market Research', 'Financial AI'].map(item => (
-                  <li key={item}><Link to="#" className="text-white/50 font-bold hover:text-[#6C3BFF] transition-colors">{item}</Link></li>
+                  <li key={item}><Link to="#" className="text-white/50 font-bold hover:text-[#6C3BFF] transition-colors text-sm md:text-base">{item}</Link></li>
                 ))}
               </ul>
             </div>
 
-            <div className="space-y-8">
-              <h4 className="text-white font-black text-xl uppercase tracking-widest">Company</h4>
-              <ul className="space-y-4">
+            <div className="space-y-6 md:space-y-8">
+              <h4 className="text-white font-black text-lg md:text-xl uppercase tracking-widest">Company</h4>
+              <ul className="space-y-3 md:space-y-4">
                 {['About Us', 'Careers', 'Blog', 'Press Kit', 'Contact'].map(item => (
-                  <li key={item}><Link to="#" className="text-white/50 font-bold hover:text-[#6C3BFF] transition-colors">{item}</Link></li>
+                  <li key={item}><Link to="#" className="text-white/50 font-bold hover:text-[#6C3BFF] transition-colors text-sm md:text-base">{item}</Link></li>
                 ))}
               </ul>
             </div>
 
-            <div className="space-y-8">
-              <h4 className="text-white font-black text-xl uppercase tracking-widest">Newsletter</h4>
-              <p className="text-white/50 font-bold">Get the latest AI startup tips and execution strategies.</p>
+            <div className="space-y-6 md:space-y-8">
+              <h4 className="text-white font-black text-lg md:text-xl uppercase tracking-widest">Newsletter</h4>
+              <p className="text-white/50 font-bold text-sm md:text-base">Get the latest AI startup tips and execution strategies.</p>
               <div className="relative">
                 <input 
                   type="email" 
                   placeholder="Email address"
-                  className="w-full px-6 py-4 bg-white/5 border-2 border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#6C3BFF] transition-all"
+                  className="w-full px-5 py-3 md:px-6 md:py-4 bg-white/5 border-2 border-white/10 rounded-xl text-white font-bold outline-none focus:border-[#6C3BFF] transition-all text-sm md:text-base"
                 />
-                <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-[#6C3BFF] text-white rounded-lg">
-                  <ArrowRight className="w-5 h-5" />
+                <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 md:p-2 bg-[#6C3BFF] text-white rounded-lg">
+                  <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center justify-between pt-10 border-t-2 border-white/5 gap-6">
-            <p className="text-white/30 font-bold text-sm">© 2026 FounderOS AI. All rights reserved.</p>
-            <div className="flex gap-10">
-              <Link to="#" className="text-white/30 font-bold text-sm hover:text-white transition-colors">Privacy Policy</Link>
-              <Link to="#" className="text-white/30 font-bold text-sm hover:text-white transition-colors">Terms of Service</Link>
+          <div className="flex flex-col md:flex-row items-center justify-between pt-8 md:pt-10 border-t-2 border-white/5 gap-6">
+            <p className="text-white/30 font-bold text-xs md:text-sm text-center md:text-left">© 2026 FounderOS AI. All rights reserved.</p>
+            <div className="flex gap-6 md:gap-10">
+              <Link to="#" className="text-white/30 font-bold text-xs md:text-sm hover:text-white transition-colors">Privacy Policy</Link>
+              <Link to="#" className="text-white/30 font-bold text-xs md:text-sm hover:text-white transition-colors">Terms of Service</Link>
             </div>
           </div>
         </div>

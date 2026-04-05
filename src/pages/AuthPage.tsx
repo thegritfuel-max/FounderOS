@@ -10,6 +10,7 @@ export const AuthPage = () => {
   const isLogin = location.pathname === '/login';
   
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -19,11 +20,25 @@ export const AuthPage = () => {
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
+    setError(null);
     try {
       await signInWithGoogle();
       navigate('/dashboard');
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error(err);
+      let message = err.message || "Failed to sign in with Google. Please try again.";
+      
+      // Try to parse if it's a JSON error from firestoreErrorHandler
+      try {
+        const parsed = JSON.parse(message);
+        if (parsed.error) {
+          message = `Database Error: ${parsed.error}`;
+        }
+      } catch (e) {
+        // Not JSON, keep original message
+      }
+      
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -114,6 +129,12 @@ export const AuthPage = () => {
               </Link>
             </p>
           </div>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl text-red-600 font-bold text-sm">
+              {error}
+            </div>
+          )}
 
           <div className="space-y-4 mb-8">
             <button 
