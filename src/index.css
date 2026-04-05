@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  
+  --color-primary: #6C3BFF;
+  --color-accent: #FFB84D;
+  --color-background: #FAFAFA;
+  --color-card: #FFFFFF;
+  --color-border: #EAEAEA;
+  --color-text: #111111;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-text font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+}
+
+@layer components {
+  .paper-shadow {
+    box-shadow: 4px 4px 0px 0px rgba(0,0,0,0.05);
+  }
+  
+  .sketch-border {
+    @apply border-2 border-border;
+  }
+  
+  .btn-primary {
+    @apply px-6 py-3 bg-primary text-white font-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] border-2 border-text hover:translate-y-[-2px] active:translate-y-[2px] transition-all;
+  }
+}
+
+/* Custom range input styling */
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  @apply w-6 h-6 bg-white border-4 border-primary rounded-full cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)];
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-200 rounded-full hover:bg-gray-300 transition-colors;
+}
