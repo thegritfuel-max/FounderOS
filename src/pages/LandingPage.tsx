@@ -22,7 +22,6 @@ import { HorizonHeroSection } from '../components/ui/horizon-hero-section';
 import { FlickeringFooter } from '../components/ui/flickering-footer';
 import { UpgradeModal } from '../components/UpgradeModal';
 import { InfiniteTextMarquee } from '../components/ui/infinite-text-marquee';
-import { FlipLinks } from '../components/ui/flip-links';
 
 const features = [
   { icon: Rocket, title: 'AI Startup Analysis', desc: 'Deep dive into your idea with AI-powered feasibility and risk assessment.' },
@@ -298,15 +297,50 @@ export const LandingPage = () => {
         />
       </section>
 
-      {/* Social Links Section - FlipLinks */}
-      <section className="py-40 bg-white border-b-8 border-[#111111]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-20">
+      {/* Vertical Social Links Section */}
+      <section className="py-40 bg-white border-b-8 border-[#111111] overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-20">
+          <div className="flex-1 text-center md:text-left">
             <div className="inline-block px-6 py-2 bg-[#F0FFF4] border-2 border-[#22C55E] rounded-full text-[#22C55E] text-sm font-black mb-6 uppercase tracking-widest">COMMUNITY</div>
-            <h2 className="text-5xl md:text-7xl font-black tracking-tighter uppercase">Connect with us</h2>
+            <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.9] mb-8">
+              Join the <br /> <span className="text-[#6C3BFF]">Movement</span>
+            </h2>
+            <p className="text-xl text-gray-500 font-bold max-w-lg">
+              Follow us on social media to get the latest updates, tips, and insights from the FounderOS community.
+            </p>
           </div>
-          <div className="flex flex-col items-center justify-center gap-4">
-            <FlipLinks />
+          
+          <div className="flex-1 flex justify-center items-center">
+            <div className="flex gap-8 md:gap-16">
+              {[
+                { name: 'Twitter', url: 'https://x.com/thisis_vaib' },
+                { name: 'Linkedin', url: 'https://linkedin.com/in/vaib215' },
+                { name: 'Github', url: 'https://github.com/vaib215' },
+                { name: 'Instagram', url: 'https://instagram.com/thisis_vaib' }
+              ].map((platform, idx) => (
+                <a 
+                  key={platform.name} 
+                  href={platform.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center group"
+                >
+                  <div className="text-4xl md:text-6xl font-black uppercase tracking-tighter flex flex-col leading-none">
+                    {platform.name.split('').map((char, i) => (
+                      <motion.span 
+                        key={i}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: (idx * 0.1) + (i * 0.05) }}
+                        className="group-hover:text-[#6C3BFF] transition-colors cursor-pointer"
+                      >
+                        {char}
+                      </motion.span>
+                    ))}
+                  </div>
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -395,8 +429,8 @@ export const LandingPage = () => {
                 <a href="#" className="w-10 h-10 md:w-12 md:h-12 bg-white/5 border-2 border-white/10 rounded-xl flex items-center justify-center hover:bg-[#6C3BFF] hover:border-[#6C3BFF] transition-all cursor-pointer group">
                   <Github className="w-4 h-4 md:w-5 md:h-5 text-white/40 group-hover:text-white transition-colors" />
                 </a>
-                <a href="#" className="w-12 h-12 bg-white/5 border-2 border-white/10 rounded-xl flex items-center justify-center hover:bg-[#6C3BFF] hover:border-[#6C3BFF] transition-all cursor-pointer group">
-                  <Instagram className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
+                <a href="#" className="w-10 h-10 md:w-12 md:h-12 bg-white/5 border-2 border-white/10 rounded-xl flex items-center justify-center hover:bg-[#6C3BFF] hover:border-[#6C3BFF] transition-all cursor-pointer group">
+                  <Instagram className="w-4 h-4 md:w-5 md:h-5 text-white/40 group-hover:text-white transition-colors" />
                 </a>
               </div>
             </div>

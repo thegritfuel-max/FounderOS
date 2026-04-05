@@ -566,18 +566,18 @@ export const HorizonHeroSection = () => {
     <div ref={containerRef} className="hero-container cosmos-style relative overflow-hidden bg-black min-h-[300vh]">
       <canvas ref={canvasRef} className="hero-canvas fixed top-0 left-0 w-full h-full pointer-events-none" />
       
-      {/* Side menu */}
-      <div ref={menuRef} className="side-menu fixed left-8 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-8" style={{ visibility: 'hidden' }}>
+      {/* Side menu - REMOVED to prevent overlap */}
+      {/* <div ref={menuRef} className="side-menu fixed left-8 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-8" style={{ visibility: 'hidden' }}>
         <div className="menu-icon flex flex-col gap-1.5 cursor-pointer group">
           <span className="w-6 h-0.5 bg-white transition-all group-hover:w-8"></span>
           <span className="w-8 h-0.5 bg-white"></span>
           <span className="w-6 h-0.5 bg-white transition-all group-hover:w-8"></span>
         </div>
         <div className="vertical-text [writing-mode:vertical-lr] text-white/50 tracking-[0.5em] text-xs font-medium">FOUNDEROS</div>
-      </div>
+      </div> */}
 
-      {/* Main content */}
-      <div className="hero-content cosmos-content fixed top-0 left-0 w-full h-screen flex flex-col items-center justify-center pointer-events-none z-10">
+      {/* Main content - REMOVED to prevent overlap with LandingPage */}
+      {/* <div className="hero-content cosmos-content fixed top-0 left-0 w-full h-screen flex flex-col items-center justify-center pointer-events-none z-10">
         <h1 ref={titleRef} className="hero-title text-[15vw] font-bold text-white tracking-tighter leading-none opacity-0" style={{ visibility: 'hidden' }}>
           FOUNDEROS
         </h1>
@@ -590,7 +590,7 @@ export const HorizonHeroSection = () => {
             Using Advanced AI Operating System
           </p>
         </div>
-      </div>
+      </div> */}
 
       {/* Scroll progress indicator */}
       <div ref={scrollProgressRef} className="scroll-progress fixed bottom-12 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-4" style={{ visibility: 'hidden' }}>
