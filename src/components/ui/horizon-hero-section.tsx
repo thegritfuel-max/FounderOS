@@ -11,7 +11,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 
 gsap.registerPlugin(ScrollTrigger);
 
-export const HorizonHeroSection = () => {
+export const HorizonHeroSection = ({ isBackground = false }: { isBackground?: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -545,15 +545,16 @@ export const HorizonHeroSection = () => {
       refs.mountains.forEach((mountain, i) => {
         const speed = 1 + i * 0.9;
         const targetZ = mountain.userData.baseZ + scrollY * speed * 0.5;
-        if (refs.nebula) refs.nebula.position.z = (targetZ + progress * speed * 0.01) - 100
         
         if (progress > 0.7) {
           mountain.position.z = 600000;
         } else {
-          mountain.position.z = refs.locations[i]
+          mountain.position.z = targetZ;
         }
       });
-      if (refs.nebula && refs.mountains[3]) refs.nebula.position.z = refs.mountains[3].position.z
+      if (refs.nebula && refs.mountains && refs.mountains.length > 3) {
+        refs.nebula.position.z = refs.mountains[3].position.z;
+      }
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -563,52 +564,59 @@ export const HorizonHeroSection = () => {
   }, [totalSections]);
 
   return (
-    <div ref={containerRef} className="hero-container cosmos-style relative overflow-hidden bg-black min-h-[300vh]">
+    <div ref={containerRef} className={`hero-container cosmos-style relative overflow-hidden bg-black ${isBackground ? 'min-h-full' : 'min-h-[300vh]'}`}>
       <canvas ref={canvasRef} className="hero-canvas fixed top-0 left-0 w-full h-full pointer-events-none" />
       
-      {/* Side menu - REMOVED to prevent overlap */}
-      {/* <div ref={menuRef} className="side-menu fixed left-8 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-8" style={{ visibility: 'hidden' }}>
-        <div className="menu-icon flex flex-col gap-1.5 cursor-pointer group">
-          <span className="w-6 h-0.5 bg-white transition-all group-hover:w-8"></span>
-          <span className="w-8 h-0.5 bg-white"></span>
-          <span className="w-6 h-0.5 bg-white transition-all group-hover:w-8"></span>
-        </div>
-        <div className="vertical-text [writing-mode:vertical-lr] text-white/50 tracking-[0.5em] text-xs font-medium">FOUNDEROS</div>
-      </div> */}
+      {!isBackground && (
+        <>
+          {/* Side menu */}
+          <div ref={menuRef} className="side-menu fixed left-8 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-8" style={{ visibility: 'hidden' }}>
+            <div className="menu-icon flex flex-col gap-1.5 cursor-pointer group">
+              <span className="w-6 h-0.5 bg-white transition-all group-hover:w-8"></span>
+              <span className="w-8 h-0.5 bg-white"></span>
+              <span className="w-6 h-0.5 bg-white transition-all group-hover:w-8"></span>
+            </div>
+            <div className="vertical-text [writing-mode:vertical-lr] text-white/50 tracking-[0.5em] text-xs font-medium">FOUNDEROS</div>
+          </div>
 
-      {/* Main content - REMOVED to prevent overlap with LandingPage */}
-      {/* <div className="hero-content cosmos-content fixed top-0 left-0 w-full h-screen flex flex-col items-center justify-center pointer-events-none z-10">
-        <h1 ref={titleRef} className="hero-title text-[15vw] font-bold text-white tracking-tighter leading-none opacity-0" style={{ visibility: 'hidden' }}>
-          FOUNDEROS
-        </h1>
-        
-        <div ref={subtitleRef} className="hero-subtitle cosmos-subtitle text-center mt-8 space-y-2 opacity-0" style={{ visibility: 'hidden' }}>
-          <p className="subtitle-line text-xl text-white/70 font-light tracking-wide">
-            Turn Startup Ideas Into Execution Ready Companies
-          </p>
-          <p className="subtitle-line text-xl text-white/70 font-light tracking-wide">
-            Using Advanced AI Operating System
-          </p>
-        </div>
-      </div> */}
+          {/* Main content */}
+          <div className="hero-content cosmos-content fixed top-0 left-0 w-full h-screen flex flex-col items-center justify-center pointer-events-none z-10">
+            <h1 ref={titleRef} className="hero-title text-[15vw] font-bold text-white tracking-tighter leading-none opacity-0" style={{ visibility: 'hidden' }}>
+              FOUNDEROS
+            </h1>
+            
+            <div ref={subtitleRef} className="hero-subtitle cosmos-subtitle text-center mt-8 space-y-2 opacity-0" style={{ visibility: 'hidden' }}>
+              <p className="subtitle-line text-xl text-white/70 font-light tracking-wide">
+                Turn Startup Ideas Into Execution Ready Companies
+              </p>
+              <p className="subtitle-line text-xl text-white/70 font-light tracking-wide">
+                Using Advanced AI Operating System
+              </p>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Scroll progress indicator */}
-      <div ref={scrollProgressRef} className="scroll-progress fixed bottom-12 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-4" style={{ visibility: 'hidden' }}>
-        <div className="scroll-text text-[10px] text-white/50 tracking-[0.3em] font-medium uppercase">SCROLL</div>
-        <div className="progress-track w-48 h-[1px] bg-white/10 relative overflow-hidden">
-          <div 
-            className="progress-fill absolute top-0 left-0 h-full bg-white transition-all duration-300" 
-            style={{ width: `${scrollProgress * 100}%` }}
-          />
+      {!isBackground && (
+        <div ref={scrollProgressRef} className="scroll-progress fixed bottom-12 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-4" style={{ visibility: 'hidden' }}>
+          <div className="scroll-text text-[10px] text-white/50 tracking-[0.3em] font-medium uppercase">SCROLL</div>
+          <div className="progress-track w-48 h-[1px] bg-white/10 relative overflow-hidden">
+            <div 
+              className="progress-fill absolute top-0 left-0 h-full bg-white transition-all duration-300" 
+              style={{ width: `${scrollProgress * 100}%` }}
+            />
+          </div>
+          <div className="section-counter text-[10px] text-white/50 font-mono">
+            {String(currentSection).padStart(2, '0')} / {String(totalSections).padStart(2, '0')}
+          </div>
         </div>
-        <div className="section-counter text-[10px] text-white/50 font-mono">
-          {String(currentSection).padStart(2, '0')} / {String(totalSections).padStart(2, '0')}
-        </div>
-      </div>
+      )}
 
       {/* Additional sections for scrolling */}
-      <div className="scroll-sections relative z-20">
-       {[...Array(2)].map((_, i) => {
+      {!isBackground && (
+        <div className="scroll-sections relative z-20">
+         {[...Array(2)].map((_, i) => {
           const titles: Record<number, string> = {
             0: 'FOUNDEROS',
             1: 'EXECUTION',
@@ -648,6 +656,7 @@ export const HorizonHeroSection = () => {
           );
         })}
       </div>
+      )}
     </div>
   );
 };

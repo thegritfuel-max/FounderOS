@@ -287,7 +287,7 @@ export const Roadmap = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {resources?.incubationWebsites.map((site: any, i: number) => (
+                {resources?.incubation?.map((site: any, i: number) => (
                   <a 
                     key={i}
                     href={site.url}
@@ -317,7 +317,7 @@ export const Roadmap = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {resources?.fundingWebsites.map((site: any, i: number) => (
+                {resources?.funding?.map((site: any, i: number) => (
                   <a 
                     key={i}
                     href={site.url}

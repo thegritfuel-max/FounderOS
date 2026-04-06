@@ -78,7 +78,37 @@ export const Analysis = () => {
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        onclone: (clonedDoc) => {
+          // Fix for oklch colors which html2canvas doesn't support
+          const elements = clonedDoc.querySelectorAll('*');
+          elements.forEach((el) => {
+            const htmlEl = el as HTMLElement;
+            // Use the cloned document's view to get computed styles
+            const styles = clonedDoc.defaultView?.getComputedStyle(el) || window.getComputedStyle(el);
+            
+            // Properties to check for oklch colors
+            const colorProps = ['color', 'backgroundColor', 'borderColor', 'fill', 'stroke'];
+            colorProps.forEach(prop => {
+              const value = (htmlEl.style as any)[prop] || styles.getPropertyValue(prop);
+              if (value && (value.includes('oklch') || value.includes('var('))) {
+                // Fallback to safe colors for common FounderOS themes
+                if (prop === 'color') htmlEl.style.color = '#111111';
+                if (prop === 'backgroundColor') {
+                  if (value.includes('6C3BFF') || value.includes('108, 59, 255')) {
+                    htmlEl.style.backgroundColor = '#6C3BFF';
+                  } else if (value.includes('0.3') || value.includes('0.1')) {
+                    htmlEl.style.backgroundColor = '#F8F7FF';
+                  } else {
+                    htmlEl.style.backgroundColor = '#ffffff';
+                  }
+                }
+                if (prop === 'borderColor') htmlEl.style.borderColor = '#111111';
+                if (prop === 'fill') htmlEl.style.fill = '#6C3BFF';
+              }
+            });
+          });
+        }
       });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -87,7 +117,7 @@ export const Analysis = () => {
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`FounderOS_Analysis_${analysisResult.gemini?.domain || 'Report'}_${new Date().getTime()}.pdf`);
+      pdf.save(`FounderOS_Analysis_${analysisResult?.gemini?.domain || 'Report'}_${new Date().getTime()}.pdf`);
     } catch (err) {
       console.error('Export failed:', err);
     } finally {
@@ -180,12 +210,12 @@ export const Analysis = () => {
           tam: 5000,
           sam: 1200,
           som: 300,
-          competitors: compData.map((c: any) => ({
+          competitors: Array.isArray(compData) ? compData.map((c: any) => ({
             name: c.title,
             strength: "Established presence",
             weakness: "High cost",
             gap: "Limited AI integration"
-          }))
+          })) : []
         },
         financeModel: {
           projections: [
@@ -202,11 +232,11 @@ export const Analysis = () => {
           phases: [
             {
               title: "Phase 1: Launch",
-              tasks: geminiData.tasks.map((t: string, i: number) => ({
+              tasks: Array.isArray(geminiData?.tasks) ? geminiData.tasks.map((t: string, i: number) => ({
                 id: `t${i}`,
                 task: t,
                 completed: false
-              }))
+              })) : []
             }
           ]
         },
@@ -229,7 +259,7 @@ export const Analysis = () => {
 
   const timelineData = analysisResult?.trends?.interest_over_time?.timeline_data?.map((item: any) => ({
     date: item.date,
-    value: parseInt(item.values[0].extracted_value) || 0
+    value: parseInt(item.values?.[0]?.extracted_value) || 0
   })) || [];
 
   return (
@@ -337,10 +367,10 @@ export const Analysis = () => {
           {/* Scores Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { label: 'Startup Score', value: `${analysisResult.gemini.scores.startupScore}/100`, sub: 'High potential venture', icon: TrendingUp, color: 'text-green-500', progress: analysisResult.gemini.scores.startupScore },
-              { label: 'Risk Score', value: `${analysisResult.gemini.scores.riskScore}/100`, sub: 'Low to medium risk', icon: AlertTriangle, color: 'text-yellow-500', progress: analysisResult.gemini.scores.riskScore },
-              { label: 'Success Prob.', value: `${analysisResult.gemini.scores.successProbability}%`, sub: 'Based on market trends', icon: Target, color: 'text-blue-500', progress: analysisResult.gemini.scores.successProbability },
-              { label: 'Market Opp.', value: `${analysisResult.gemini.scores.marketOpportunity}/10`, sub: 'Expanding market size', icon: Users, color: 'text-purple-500', progress: analysisResult.gemini.scores.marketOpportunity * 10 },
+              { label: 'Startup Score', value: `${analysisResult.gemini?.scores?.startupScore || 0}/100`, sub: 'High potential venture', icon: TrendingUp, color: 'text-green-500', progress: analysisResult.gemini?.scores?.startupScore || 0 },
+              { label: 'Risk Score', value: `${analysisResult.gemini?.scores?.riskScore || 0}/100`, sub: 'Low to medium risk', icon: AlertTriangle, color: 'text-yellow-500', progress: analysisResult.gemini?.scores?.riskScore || 0 },
+              { label: 'Success Prob.', value: `${analysisResult.gemini?.scores?.successProbability || 0}%`, sub: 'Based on market trends', icon: Target, color: 'text-blue-500', progress: analysisResult.gemini?.scores?.successProbability || 0 },
+              { label: 'Market Opp.', value: `${analysisResult.gemini?.scores?.marketOpportunity || 0}/10`, sub: 'Expanding market size', icon: Users, color: 'text-purple-500', progress: (analysisResult.gemini?.scores?.marketOpportunity || 0) * 10 },
             ].map((item, i) => (
               <div key={i} className="bg-white border-4 border-[#111111] p-6 rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
                 <div className="flex items-center gap-3 mb-4">
@@ -418,17 +448,17 @@ export const Analysis = () => {
               <div className="space-y-6">
                 <div className="p-6 bg-white/5 rounded-2xl border-2 border-white/10">
                   <div className="text-xs font-black text-gray-500 uppercase tracking-widest mb-1">SUGGESTED SYMBOL</div>
-                  <div className="text-3xl font-black text-[#6C3BFF]">{analysisResult.gemini.suggestedSymbol}</div>
+                  <div className="text-3xl font-black text-[#6C3BFF]">{analysisResult.gemini?.suggestedSymbol || '---'}</div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-white/5 rounded-xl border-2 border-white/10">
                     <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">MARKET PRICE</div>
-                    <div className="text-xl font-black">${analysisResult.finance.regularMarketPrice?.toFixed(2) || '---'}</div>
+                    <div className="text-xl font-black">${analysisResult.finance?.regularMarketPrice?.toFixed(2) || '---'}</div>
                   </div>
                   <div className="p-4 bg-white/5 rounded-xl border-2 border-white/10">
                     <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">CHANGE</div>
-                    <div className={`text-xl font-black ${analysisResult.finance.regularMarketChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {analysisResult.finance.regularMarketChangePercent?.toFixed(2)}%
+                    <div className={`text-xl font-black ${(analysisResult.finance?.regularMarketChange || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {analysisResult.finance?.regularMarketChangePercent?.toFixed(2) || '0.00'}%
                     </div>
                   </div>
                 </div>
@@ -447,22 +477,22 @@ export const Analysis = () => {
                 Feasibility Analysis
               </h3>
               <p className="text-gray-600 font-medium leading-relaxed bg-gray-50 p-6 rounded-2xl border-2 border-dashed border-gray-200">
-                {analysisResult.gemini.feasibility}
+                {analysisResult.gemini?.feasibility || 'No feasibility data available.'}
               </p>
             </div>
 
             <div className="bg-[#111111] text-white border-4 border-[#111111] rounded-[32px] p-8 shadow-[8px_8px_0px_0px_rgba(108,59,255,0.3)]">
               <h3 className="text-2xl font-black mb-6 flex items-center gap-3">
                 <BookOpen className="w-6 h-6 text-[#6C3BFF]" />
-                Case Study: {analysisResult.gemini.caseStudy.name}
+                Case Study: {analysisResult.gemini?.caseStudy?.name || 'N/A'}
               </h3>
               <div className="space-y-4">
                 <p className="text-white/70 font-medium leading-relaxed italic">
-                  "{analysisResult.gemini.caseStudy.description}"
+                  "{analysisResult.gemini?.caseStudy?.description || 'No case study description available.'}"
                 </p>
                 <div className="p-4 bg-[#6C3BFF]/20 rounded-xl border-2 border-[#6C3BFF]/30">
                   <div className="text-[10px] font-black uppercase tracking-widest text-[#6C3BFF] mb-1">KEY TAKEAWAY</div>
-                  <div className="font-bold text-sm">{analysisResult.gemini.caseStudy.keyTakeaway}</div>
+                  <div className="font-bold text-sm">{analysisResult.gemini?.caseStudy?.keyTakeaway || 'N/A'}</div>
                 </div>
               </div>
             </div>
@@ -476,7 +506,7 @@ export const Analysis = () => {
                 Top Competitors
               </h3>
               <div className="space-y-4">
-                {analysisResult.competitors.slice(0, 4).map((comp: any, i: number) => (
+                {Array.isArray(analysisResult.competitors) ? analysisResult.competitors.slice(0, 4).map((comp: any, i: number) => (
                   <div key={i} className="flex items-center justify-between p-4 bg-[#FAFAFA] border-2 border-[#111111] rounded-xl hover:translate-x-2 transition-all cursor-pointer group">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-white border-2 border-[#111111] rounded-lg flex items-center justify-center font-black text-[#6C3BFF]">
@@ -489,7 +519,9 @@ export const Analysis = () => {
                     </div>
                     <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-[#111111] transition-colors" />
                   </div>
-                ))}
+                )) : (
+                  <div className="p-4 text-gray-400 font-bold text-center">No competitors found.</div>
+                )}
               </div>
             </div>
 
@@ -499,7 +531,7 @@ export const Analysis = () => {
                 Execution Roadmap
               </h3>
               <div className="space-y-4">
-                {analysisResult.gemini.tasks.map((task: string, i: number) => (
+                {analysisResult.gemini?.tasks?.map((task: string, i: number) => (
                   <div key={i} className="flex items-start gap-4 p-4 bg-white border-2 border-[#111111] rounded-xl">
                     <div className="w-6 h-6 bg-[#6C3BFF] rounded-full flex-shrink-0 flex items-center justify-center text-[10px] text-white font-black">
                       {i + 1}

@@ -51,7 +51,7 @@ export const LandingPage = () => {
       {/* Hero Section */}
       <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden border-b-8 border-[#111111]">
         <div className="absolute inset-0 z-0">
-          <HorizonHeroSection />
+          <HorizonHeroSection isBackground />
         </div>
         
         <div className="relative z-30 flex flex-col items-center justify-center px-6 text-center max-w-5xl mx-auto">
