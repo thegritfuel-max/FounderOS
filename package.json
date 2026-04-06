@@ -16,6 +16,7 @@
     "@tailwindcss/vite": "^4.1.14",
     "@types/three": "^0.183.1",
     "@vitejs/plugin-react": "^5.0.4",
+    "axios": "^1.14.0",
     "clsx": "^2.1.1",
     "color-bits": "^1.1.1",
     "date-fns": "^4.1.0",

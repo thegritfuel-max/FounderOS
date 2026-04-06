@@ -1,59 +1,58 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, 
-  Users, 
-  Target, 
-  AlertTriangle, 
-  ArrowUpRight,
-  Plus
+  Plus,
+  Globe,
+  AlertCircle,
+  Loader2,
+  Map as MapIcon,
+  Lightbulb
 } from 'lucide-react';
-import { DashboardCard } from '../../components/DashboardCard';
-import { ChartCard } from '../../components/ChartCard';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
-
-const revenueData = [
-  { month: 'Jan', revenue: 0 },
-  { month: 'Feb', revenue: 1200 },
-  { month: 'Mar', revenue: 2800 },
-  { month: 'Apr', revenue: 5600 },
-  { month: 'May', revenue: 8900 },
-  { month: 'Jun', revenue: 14500 },
-];
-
-const marketData = [
-  { name: 'TAM', value: 5000, color: '#6C3BFF' },
-  { name: 'SAM', value: 1200, color: '#FFB84D' },
-  { name: 'SOM', value: 300, color: '#111111' },
-];
+import { Link } from 'react-router-dom';
+import { getStartupsByUser } from '../../services/startupService';
+import { useAuth } from '../../services/authService';
+import { fetchTrendingProblems } from '../../services/geminiService';
 
 export const Overview = () => {
-  const [startupData, setStartupData] = React.useState<any>(null);
+  const { user } = useAuth();
+  const [ideaCount, setIdeaCount] = useState(0);
+  const [trendingProblems, setTrendingProblems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [startupData, setStartupData] = useState<any>(null);
 
-  React.useEffect(() => {
-    const data = localStorage.getItem('founder_os_startup_analysis');
-    if (data) {
-      setStartupData(JSON.parse(data));
-    }
-  }, []);
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) return;
+      try {
+        setLoading(true);
+        const startups = await getStartupsByUser(user.uid);
+        setIdeaCount(startups.length);
+
+        const analysis = localStorage.getItem('founder_os_startup_analysis');
+        if (analysis) {
+          const parsed = JSON.parse(analysis);
+          setStartupData(parsed);
+          const problems = await fetchTrendingProblems(parsed.domain || 'Technology');
+          setTrendingProblems(problems);
+        } else {
+          const problems = await fetchTrendingProblems('Technology');
+          setTrendingProblems(problems);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [user]);
 
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-black tracking-tighter mb-1">Dashboard Overview</h1>
-          <p className="text-gray-500 font-medium">Real-time health score of your startup idea.</p>
+          <p className="text-gray-500 font-medium">Global startup ecosystem and your progress.</p>
         </div>
         <Link to="/dashboard/analysis">
           <button className="flex items-center gap-2 px-6 py-3 bg-[#6C3BFF] text-white font-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] border-2 border-[#111111] hover:translate-y-[-2px] active:translate-y-[2px] transition-all">
@@ -62,125 +61,92 @@ export const Overview = () => {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <DashboardCard 
-          title="Startup Score" 
-          value="85/100" 
-          subtitle="High potential venture"
-          icon={<TrendingUp className="w-5 h-5" />}
-          progress={85}
-        />
-        <DashboardCard 
-          title="Risk Score" 
-          value="32/100" 
-          subtitle="Low to medium risk"
-          icon={<AlertTriangle className="w-5 h-5" />}
-          progress={32}
-        />
-        <DashboardCard 
-          title="Success Prob." 
-          value="74%" 
-          subtitle="Based on market trends"
-          icon={<Target className="w-5 h-5" />}
-          progress={74}
-        />
-        <DashboardCard 
-          title="Market Opp." 
-          value="9.2/10" 
-          subtitle="Expanding market size"
-          icon={<Users className="w-5 h-5" />}
-          progress={92}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <ChartCard 
-          title="Revenue Projection" 
-          description="Estimated monthly recurring revenue (MRR)"
-          className="lg:col-span-2"
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={revenueData}>
-              <defs>
-                <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6C3BFF" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="#6C3BFF" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EAEAEA" />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 12, fontWeight: 700}} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fontWeight: 700}} tickFormatter={(value) => `₹${value}`} />
-              <Tooltip 
-                contentStyle={{ borderRadius: '12px', border: '2px solid #111111', boxShadow: '4px 4px 0px 0px rgba(0,0,0,0.1)' }}
-                itemStyle={{ fontWeight: 900 }}
-              />
-              <Area type="monotone" dataKey="revenue" stroke="#6C3BFF" strokeWidth={4} fillOpacity={1} fill="url(#colorRev)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
-        <ChartCard 
-          title="Market Size (TAM/SAM/SOM)" 
-          description="In Billions (₹)"
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={marketData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {marketData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ borderRadius: '12px', border: '2px solid #111111' }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="flex justify-center gap-4 mt-4">
-            {marketData.map((m, i) => (
-              <div key={i} className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: m.color }} />
-                <span className="text-xs font-black uppercase tracking-widest text-gray-400">{m.name}</span>
-              </div>
-            ))}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white border-4 border-[#111111] p-8 rounded-[32px] shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 bg-[#F8F7FF] rounded-2xl border-2 border-[#111111] flex items-center justify-center mb-4">
+            <Lightbulb className="w-8 h-8 text-[#6C3BFF]" />
           </div>
-        </ChartCard>
-      </div>
-
-      <div className="bg-white border-2 border-[#EAEAEA] rounded-2xl p-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)]">
-        <div className="flex justify-between items-center mb-8">
-          <h3 className="text-xl font-black tracking-tight">Execution Roadmap</h3>
-          <button className="text-sm font-black text-[#6C3BFF] flex items-center gap-1 hover:underline">
-            VIEW FULL ROADMAP <ArrowUpRight className="w-4 h-4" />
-          </button>
+          <div className="text-4xl font-black mb-1">{ideaCount}</div>
+          <div className="text-xs font-black uppercase tracking-widest text-gray-400">Ideas Listed</div>
         </div>
 
-        <div className="space-y-6">
+        <div className="md:col-span-2 bg-[#111111] text-white border-4 border-[#111111] p-8 rounded-[32px] shadow-[8px_8px_0px_0px_rgba(108,59,255,0.3)]">
+          <div className="flex items-center gap-3 mb-6">
+            <TrendingUp className="w-6 h-6 text-[#6C3BFF]" />
+            <h3 className="text-xl font-black uppercase tracking-widest">Trending Problems ({startupData?.domain || 'Global'})</h3>
+          </div>
+          
+          {loading ? (
+            <div className="flex items-center gap-3 text-white/40 font-bold">
+              <Loader2 className="w-4 h-4 animate-spin" /> Fetching market gaps...
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {trendingProblems.map((p, i) => (
+                <div key={i} className="p-4 bg-white/5 rounded-xl border-2 border-white/10 hover:border-[#6C3BFF]/50 transition-all group">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-[10px] font-black px-2 py-0.5 bg-[#6C3BFF] rounded text-white uppercase">{p.region}</span>
+                  </div>
+                  <div className="font-black text-sm mb-1 group-hover:text-[#6C3BFF] transition-colors">{p.problem}</div>
+                  <p className="text-[10px] text-white/40 font-medium leading-relaxed">{p.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-white border-4 border-[#111111] rounded-[32px] overflow-hidden shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+        <div className="p-8 border-b-4 border-[#111111] flex justify-between items-center bg-[#FAFAFA]">
+          <div className="flex items-center gap-3">
+            <Globe className="w-6 h-6 text-[#6C3BFF]" />
+            <h3 className="text-xl font-black uppercase tracking-widest">Live Startup Incubation Map</h3>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-xs font-black">1,240 ACTIVE INCUBATORS</span>
+            </div>
+          </div>
+        </div>
+        <div className="h-[500px] bg-[#F8F7FF] relative overflow-hidden flex items-center justify-center">
+          {/* Placeholder for a map visualization */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
+            <MapIcon className="w-full h-full" />
+          </div>
+          
+          {/* Simulated data points */}
           {[
-            { phase: 'Month 1', title: 'Market Research & MVP Spec', status: 'Completed', progress: 100 },
-            { phase: 'Month 2', title: 'Core Product Development', status: 'In Progress', progress: 45 },
-            { phase: 'Month 3', title: 'Beta Launch & Feedback', status: 'Pending', progress: 0 },
-          ].map((item, i) => (
-            <div key={i} className="flex items-center gap-6">
-              <div className="w-24 text-xs font-black uppercase tracking-widest text-gray-400">{item.phase}</div>
-              <div className="flex-1">
-                <div className="flex justify-between mb-2">
-                  <span className="font-bold text-sm">{item.title}</span>
-                  <span className="text-xs font-black text-[#6C3BFF]">{item.status}</span>
+            { top: '20%', left: '30%', label: 'Y-Combinator', city: 'SF, USA' },
+            { top: '45%', left: '25%', label: 'Techstars', city: 'Boulder, USA' },
+            { top: '35%', left: '50%', label: 'Station F', city: 'Paris, FR' },
+            { top: '60%', left: '70%', label: 'Antler', city: 'Singapore' },
+            { top: '55%', left: '65%', label: 'T-Hub', city: 'Hyderabad, IN' },
+            { top: '40%', left: '75%', label: 'Startup Tokyo', city: 'Tokyo, JP' },
+            { top: '70%', left: '40%', label: 'Startup Chile', city: 'Santiago, CL' },
+          ].map((point, i) => (
+            <div 
+              key={i}
+              className="absolute group cursor-pointer"
+              style={{ top: point.top, left: point.left }}
+            >
+              <div className="w-4 h-4 bg-[#6C3BFF] rounded-full border-2 border-white shadow-lg animate-bounce" style={{ animationDelay: `${i * 0.2}s` }} />
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20">
+                <div className="bg-[#111111] text-white p-3 rounded-xl border-2 border-[#6C3BFF] whitespace-nowrap shadow-xl">
+                  <div className="font-black text-xs">{point.label}</div>
+                  <div className="text-[10px] text-white/50 font-bold">{point.city}</div>
                 </div>
-                <div className="w-full h-2 bg-[#F0F0F0] rounded-full overflow-hidden border border-[#EAEAEA]">
-                  <div className="h-full bg-[#6C3BFF]" style={{ width: `${item.progress}%` }} />
-                </div>
+                <div className="w-2 h-2 bg-[#111111] border-r-2 border-b-2 border-[#6C3BFF] rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2" />
               </div>
             </div>
           ))}
+
+          <div className="text-center z-10 p-8 max-w-md">
+            <div className="text-3xl font-black mb-4 tracking-tight">Global Incubation Network</div>
+            <p className="text-gray-500 font-bold leading-relaxed">
+              Real-time tracking of startups currently in incubation programs worldwide. Click on a hub to see active cohorts.
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -42,9 +42,29 @@ export const analyzeStartup = async (input: string) => {
               type: Type.ARRAY,
               items: { type: Type.STRING }
             },
-            suggestedSymbol: { type: Type.STRING, description: "A relevant stock symbol for market comparison (e.g., AAPL, TSLA)" }
+            suggestedSymbol: { type: Type.STRING, description: "A relevant stock symbol for market comparison (e.g., AAPL, TSLA)" },
+            scores: {
+              type: Type.OBJECT,
+              properties: {
+                startupScore: { type: Type.NUMBER },
+                riskScore: { type: Type.NUMBER },
+                successProbability: { type: Type.NUMBER },
+                marketOpportunity: { type: Type.NUMBER }
+              },
+              required: ["startupScore", "riskScore", "successProbability", "marketOpportunity"]
+            },
+            feasibility: { type: Type.STRING },
+            caseStudy: {
+              type: Type.OBJECT,
+              properties: {
+                name: { type: Type.STRING },
+                description: { type: Type.STRING },
+                keyTakeaway: { type: Type.STRING }
+              },
+              required: ["name", "description", "keyTakeaway"]
+            }
           },
-          required: ["domain", "sector", "revenueModel", "valueProp", "tasks", "suggestedSymbol"]
+          required: ["domain", "sector", "revenueModel", "valueProp", "tasks", "suggestedSymbol", "scores", "feasibility", "caseStudy"]
         }
       }
     });
@@ -269,6 +289,84 @@ export const fetchCompetitorsWithGemini = async (query: string) => {
     });
 
     return JSON.parse(response.text || "[]");
+  } catch (error) {
+    return handleAIError(error);
+  }
+};
+
+export const fetchTrendingProblems = async (domain: string) => {
+  try {
+    const ai = getAI();
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Identify top 5 trending problems in the "${domain}" domain specifically for India and the US. 
+      Return the data in JSON format.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              problem: { type: Type.STRING },
+              region: { type: Type.STRING, enum: ["India", "US"] },
+              description: { type: Type.STRING }
+            },
+            required: ["problem", "region", "description"]
+          }
+        }
+      }
+    });
+
+    return JSON.parse(response.text || "[]");
+  } catch (error) {
+    return handleAIError(error);
+  }
+};
+
+export const fetchIncubationAndFunding = async (domain: string) => {
+  try {
+    const ai = getAI();
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Find top 5 incubation websites and top 5 government funding websites for startups in the "${domain}" domain. 
+      Return the data in JSON format.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            incubation: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING },
+                  url: { type: Type.STRING }
+                },
+                required: ["name", "url"]
+              }
+            },
+            funding: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING },
+                  url: { type: Type.STRING }
+                },
+                required: ["name", "url"]
+              }
+            }
+          },
+          required: ["incubation", "funding"]
+        }
+      }
+    });
+
+    return JSON.parse(response.text || "{}");
   } catch (error) {
     return handleAIError(error);
   }

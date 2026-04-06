@@ -24,7 +24,8 @@ export const Settings = () => {
     gemini: '',
     serpapi: '',
     openai: '',
-    claude: ''
+    claude: '',
+    nvidia: ''
   });
 
   const [profiles, setProfiles] = useState([
@@ -149,6 +150,17 @@ export const Settings = () => {
                       value={apiKeys.claude || ''}
                       onChange={e => setApiKeys({...apiKeys, claude: e.target.value})}
                     />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black uppercase text-gray-400 mb-2">NVIDIA API Key (Gemma 4)</label>
+                    <input 
+                      type="password" 
+                      placeholder="Enter NVIDIA API Key"
+                      className="w-full px-6 py-4 bg-[#FAFAFA] border-4 border-[#111111] rounded-2xl font-bold outline-none focus:border-[#6C3BFF] transition-all"
+                      value={apiKeys.nvidia || ''}
+                      onChange={e => setApiKeys({...apiKeys, nvidia: e.target.value})}
+                    />
+                    <p className="mt-2 text-xs text-gray-400 font-bold">Used for advanced AI reasoning with Gemma 4 models.</p>
                   </div>
                 </div>
               </div>

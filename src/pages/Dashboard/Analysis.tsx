@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   Search, 
@@ -13,29 +13,41 @@ import {
   DollarSign, 
   Users,
   CheckCircle2,
-  ArrowRight
+  ArrowRight,
+  Download,
+  History,
+  Target,
+  AlertTriangle,
+  BookOpen,
+  CheckSquare
 } from 'lucide-react';
 import { analyzeStartup, fetchTrendsWithGemini, fetchCompetitorsWithGemini } from '../../services/geminiService';
 import { ChartCard } from '../../components/ChartCard';
 import { 
-  LineChart, 
-  Line, 
+  AreaChart, 
+  Area, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  AreaChart,
-  Area
+  ResponsiveContainer
 } from 'recharts';
+import { saveStartupIdea, getStartupsByUser } from '../../services/startupService';
+import { useAuth } from '../../services/authService';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export const Analysis = () => {
+  const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const steps = [
@@ -44,6 +56,44 @@ export const Analysis = () => {
     { id: 'finance', label: 'Financial Benchmarks', icon: DollarSign },
     { id: 'competitors', label: 'Competitor Landscape', icon: Users },
   ];
+
+  useEffect(() => {
+    if (user) {
+      loadHistory();
+    }
+  }, [user]);
+
+  const loadHistory = async () => {
+    if (!user) return;
+    const data = await getStartupsByUser(user.uid);
+    setHistory(data);
+  };
+
+  const handleExportPDF = async () => {
+    const element = document.getElementById('analysis-result-content');
+    if (!element) return;
+
+    setExporting(true);
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`FounderOS_Analysis_${analysisResult.gemini?.domain || 'Report'}_${new Date().getTime()}.pdf`);
+    } catch (err) {
+      console.error('Export failed:', err);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const handleVoiceInput = () => {
     if (!('webkitSpeechRecognition' in window)) {
@@ -79,7 +129,7 @@ export const Analysis = () => {
 
   const runFullAnalysis = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!query.trim()) return;
+    if (!query.trim() || !user) return;
 
     setLoading(true);
     setError(null);
@@ -102,18 +152,73 @@ export const Analysis = () => {
       // Step 4: Competitors via Gemini
       const compData = await fetchCompetitorsWithGemini(geminiData.domain || query);
 
-      setAnalysisResult({
+      const fullResult = {
         gemini: geminiData,
         trends: trendsData,
         finance: financeData,
-        competitors: compData
-      });
+        competitors: compData,
+        timestamp: Date.now()
+      };
+
+      setAnalysisResult(fullResult);
       
+      // Save to Firestore
+      await saveStartupIdea({
+        userId: user.uid,
+        idea: query,
+        analysis: {
+          score: geminiData.scores.startupScore,
+          riskScore: geminiData.scores.riskScore,
+          successProbability: geminiData.scores.successProbability,
+          marketOpportunity: geminiData.scores.marketOpportunity,
+          problemClarity: 80, // Default values for missing fields
+          innovation: 85,
+          feasibility: 75,
+          summary: geminiData.valueProp
+        },
+        marketResearch: {
+          tam: 5000,
+          sam: 1200,
+          som: 300,
+          competitors: compData.map((c: any) => ({
+            name: c.title,
+            strength: "Established presence",
+            weakness: "High cost",
+            gap: "Limited AI integration"
+          }))
+        },
+        financeModel: {
+          projections: [
+            { month: 'Jan', revenue: 0, cost: 100000 },
+            { month: 'Feb', revenue: 4000, cost: 100000 },
+            { month: 'Mar', revenue: 8000, cost: 100000 },
+            { month: 'Apr', revenue: 12000, cost: 100000 },
+            { month: 'May', revenue: 16000, cost: 100000 },
+            { month: 'Jun', revenue: 22000, cost: 100000 },
+          ],
+          breakEvenMonth: 12
+        },
+        roadmap: {
+          phases: [
+            {
+              title: "Phase 1: Launch",
+              tasks: geminiData.tasks.map((t: string, i: number) => ({
+                id: `t${i}`,
+                task: t,
+                completed: false
+              }))
+            }
+          ]
+        },
+        createdAt: Date.now()
+      } as any);
+
       // Circulate data to other sections
       localStorage.setItem('founder_os_startup_analysis', JSON.stringify(geminiData));
       localStorage.setItem('founder_os_market_data', JSON.stringify({ trends: trendsData, competitors: compData }));
       localStorage.setItem('founder_os_finance_benchmark', JSON.stringify(financeData));
 
+      loadHistory();
       setStep(5);
     } catch (err: any) {
       setError(err.message || "An error occurred during analysis.");
@@ -129,10 +234,34 @@ export const Analysis = () => {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-black tracking-tighter mb-1">Advanced Idea Analysis</h1>
-        <p className="text-gray-500 font-medium">Multi-step validation using AI, Trends, Finance, and Competitor data.</p>
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-black tracking-tighter mb-1">Advanced Idea Analysis</h1>
+          <p className="text-gray-500 font-medium">Multi-step validation using AI, Trends, Finance, and Competitor data.</p>
+        </div>
+        <button 
+          onClick={() => setShowHistory(!showHistory)}
+          className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-[#111111] rounded-xl font-black hover:bg-gray-50 transition-all"
+        >
+          <History className="w-4 h-4" /> {showHistory ? 'HIDE HISTORY' : 'VIEW HISTORY'}
+        </button>
       </div>
+
+      {showHistory && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {history.map((item, i) => (
+            <div 
+              key={i} 
+              onClick={() => setAnalysisResult(item.analysis)}
+              className="p-4 bg-white border-2 border-[#111111] rounded-xl cursor-pointer hover:translate-y-[-2px] transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)]"
+            >
+              <div className="text-xs font-black text-gray-400 mb-1">{new Date(item.createdAt).toLocaleDateString()}</div>
+              <div className="font-bold truncate">{item.idea}</div>
+              <div className="text-[10px] font-black text-[#6C3BFF] mt-2 uppercase">{item.analysis?.gemini?.domain || 'N/A'}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Input Section */}
       <div className="bg-white border-4 border-[#111111] rounded-[32px] p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
@@ -192,13 +321,49 @@ export const Analysis = () => {
       )}
 
       {analysisResult && (
-        <div className="space-y-10">
+        <div className="space-y-10" id="analysis-result-content">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-black tracking-tight uppercase">Analysis Result: {analysisResult.gemini?.domain || 'N/A'}</h2>
+            <button 
+              onClick={handleExportPDF}
+              disabled={exporting}
+              className="flex items-center gap-2 px-6 py-3 bg-[#111111] text-white font-black rounded-xl shadow-[4px_4px_0px_0px_rgba(108,59,255,1)] border-2 border-[#111111] hover:translate-y-[-2px] active:translate-y-[2px] transition-all disabled:opacity-50"
+            >
+              {exporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />} 
+              {exporting ? 'EXPORTING...' : 'EXPORT PDF'}
+            </button>
+          </div>
+
+          {/* Scores Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { label: 'Startup Score', value: `${analysisResult.gemini.scores.startupScore}/100`, sub: 'High potential venture', icon: TrendingUp, color: 'text-green-500', progress: analysisResult.gemini.scores.startupScore },
+              { label: 'Risk Score', value: `${analysisResult.gemini.scores.riskScore}/100`, sub: 'Low to medium risk', icon: AlertTriangle, color: 'text-yellow-500', progress: analysisResult.gemini.scores.riskScore },
+              { label: 'Success Prob.', value: `${analysisResult.gemini.scores.successProbability}%`, sub: 'Based on market trends', icon: Target, color: 'text-blue-500', progress: analysisResult.gemini.scores.successProbability },
+              { label: 'Market Opp.', value: `${analysisResult.gemini.scores.marketOpportunity}/10`, sub: 'Expanding market size', icon: Users, color: 'text-purple-500', progress: analysisResult.gemini.scores.marketOpportunity * 10 },
+            ].map((item, i) => (
+              <div key={i} className="bg-white border-4 border-[#111111] p-6 rounded-2xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-gray-50 rounded-lg border-2 border-[#111111]">
+                    <item.icon className={`w-5 h-5 ${item.color}`} />
+                  </div>
+                  <span className="text-xs font-black uppercase tracking-widest text-gray-400">{item.label}</span>
+                </div>
+                <div className="text-3xl font-black mb-1">{item.value}</div>
+                <div className="text-[10px] font-bold text-gray-500 mb-4">{item.sub}</div>
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                  <div className={`h-full ${item.color.replace('text-', 'bg-')}`} style={{ width: `${item.progress}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
           {/* AI Insights Summary */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { label: 'DOMAIN', value: analysisResult.gemini.domain, icon: Globe, color: 'bg-blue-500' },
-              { label: 'SECTOR', value: analysisResult.gemini.sector, icon: BarChart3, color: 'bg-purple-500' },
-              { label: 'REVENUE MODEL', value: analysisResult.gemini.revenueModel, icon: DollarSign, color: 'bg-green-500' },
+              { label: 'DOMAIN', value: analysisResult.gemini?.domain || 'N/A', icon: Globe, color: 'bg-blue-500' },
+              { label: 'SECTOR', value: analysisResult.gemini?.sector || 'N/A', icon: BarChart3, color: 'bg-purple-500' },
+              { label: 'REVENUE MODEL', value: analysisResult.gemini?.revenueModel || 'N/A', icon: DollarSign, color: 'bg-green-500' },
             ].map((item, i) => (
               <motion.div
                 key={i}
@@ -270,6 +435,35 @@ export const Analysis = () => {
                 <p className="text-sm text-white/40 font-bold leading-relaxed">
                   This benchmark represents a leading public company in your sector, used to calibrate our financial projections.
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Feasibility & Case Study */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-white border-4 border-[#111111] rounded-[32px] p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <h3 className="text-2xl font-black mb-6 flex items-center gap-3">
+                <CheckSquare className="w-6 h-6 text-green-500" />
+                Feasibility Analysis
+              </h3>
+              <p className="text-gray-600 font-medium leading-relaxed bg-gray-50 p-6 rounded-2xl border-2 border-dashed border-gray-200">
+                {analysisResult.gemini.feasibility}
+              </p>
+            </div>
+
+            <div className="bg-[#111111] text-white border-4 border-[#111111] rounded-[32px] p-8 shadow-[8px_8px_0px_0px_rgba(108,59,255,0.3)]">
+              <h3 className="text-2xl font-black mb-6 flex items-center gap-3">
+                <BookOpen className="w-6 h-6 text-[#6C3BFF]" />
+                Case Study: {analysisResult.gemini.caseStudy.name}
+              </h3>
+              <div className="space-y-4">
+                <p className="text-white/70 font-medium leading-relaxed italic">
+                  "{analysisResult.gemini.caseStudy.description}"
+                </p>
+                <div className="p-4 bg-[#6C3BFF]/20 rounded-xl border-2 border-[#6C3BFF]/30">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-[#6C3BFF] mb-1">KEY TAKEAWAY</div>
+                  <div className="font-bold text-sm">{analysisResult.gemini.caseStudy.keyTakeaway}</div>
+                </div>
               </div>
             </div>
           </div>

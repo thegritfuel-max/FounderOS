@@ -3,9 +3,12 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
-import yahooFinance from 'yahoo-finance2';
+import YahooFinance from 'yahoo-finance2';
+import axios from "axios";
 
 dotenv.config();
+
+const yahooFinance = new YahooFinance();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,11 +54,17 @@ async function startServer() {
     if (!symbol) return res.status(400).json({ error: "Symbol is required" });
 
     try {
+      // In yahoo-finance2 v3+, we might need to use the default export or a specific method
+      // The error suggests we need to instantiate it if using it in a certain way, 
+      // but usually the default export works. Let's try to use it directly with quote.
       const result = await yahooFinance.quote(symbol as string);
       res.json(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Yahoo Finance Error:", error);
-      res.status(500).json({ error: "Failed to fetch finance data" });
+      res.status(500).json({ 
+        error: "Failed to fetch finance data",
+        details: error.message 
+      });
     }
   });
 
@@ -80,6 +89,62 @@ async function startServer() {
     } catch (error) {
       console.error("Competitor Scraping Error:", error);
       res.status(500).json({ error: "Failed to fetch competitors" });
+    }
+  });
+
+  // API Route for NVIDIA AI API
+  app.post("/api/nvidia/chat", async (req, res) => {
+    const { messages, model = "google/gemma-4-31b-it", stream = false } = req.body;
+    const userApiKey = req.headers['x-nvidia-api-key'] as string;
+    const apiKey = userApiKey || process.env.NVIDIA_API_KEY;
+
+    if (!apiKey) {
+      return res.status(500).json({ error: "NVIDIA_API_KEY is not configured. Please add it in Settings or environment." });
+    }
+
+    if (!messages) {
+      return res.status(400).json({ error: "Messages are required" });
+    }
+
+    try {
+      const invokeUrl = "https://integrate.api.nvidia.com/v1/chat/completions";
+      const headers = {
+        "Authorization": `Bearer ${apiKey}`,
+        "Accept": stream ? "text/event-stream" : "application/json",
+        "Content-Type": "application/json"
+      };
+
+      const payload = {
+        model,
+        messages,
+        max_tokens: 16384,
+        temperature: 1.00,
+        top_p: 0.95,
+        stream,
+        chat_template_kwargs: { "enable_thinking": true }
+      };
+
+      if (stream) {
+        const response = await axios.post(invokeUrl, payload, {
+          headers,
+          responseType: 'stream'
+        });
+
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        response.data.pipe(res);
+      } else {
+        const response = await axios.post(invokeUrl, payload, { headers });
+        res.json(response.data);
+      }
+    } catch (error: any) {
+      console.error("NVIDIA API Error:", error.response?.data || error.message);
+      res.status(error.response?.status || 500).json({ 
+        error: "Failed to fetch from NVIDIA API",
+        details: error.response?.data || error.message
+      });
     }
   });
 
